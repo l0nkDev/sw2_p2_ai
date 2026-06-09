@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Vertex AI
-# On Cloud Run, it automatically detects the Project ID, Location, and Service Account!
-vertexai.init()
+# Explicitly setting the region to match your Cloud Run deployment
+vertexai.init(location="europe-west1")
 
-# Using the Vertex AI Gemini model
-model = GenerativeModel("gemini-1.5-flash-001")
+# Using the generic Vertex AI Gemini model alias
+model = GenerativeModel("gemini-1.5-flash")
 
 def analyze_prescription(raw_ocr_text: str, image_bytes: bytes) -> List[Dict]:
     """
