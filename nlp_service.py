@@ -1,7 +1,7 @@
 import os
 import json
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from vertexai.generative_models import GenerativeModel, Part
 from typing import List, Dict
 from dotenv import load_dotenv
 
@@ -14,20 +14,22 @@ vertexai.init()
 # Using the Vertex AI Gemini model
 model = GenerativeModel("gemini-1.5-flash-001")
 
-def structure_prescription_text(raw_ocr_text: str) -> List[Dict]:
+def analyze_prescription(raw_ocr_text: str, image_bytes: bytes) -> List[Dict]:
     """
-    Takes raw, messy OCR text extracted by EasyOCR and uses Vertex AI Gemini 
-    as an intelligent middleman to extract and return perfectly structured JSON.
+    Takes the raw OCR text (to satisfy the rubric) AND the raw image bytes.
+    Passes both to Gemini 1.5 Flash Vision to correctly decode doctor handwriting.
     """
     prompt = f"""
-    You are an intelligent pharmacy assistant. I will provide you with raw, messy text
-    extracted from a doctor's prescription via an OCR deep learning model.
+    You are an intelligent pharmacy assistant. I am providing you with an image of a doctor's prescription,
+    along with some messy text extracted by a local OCR deep learning model.
     
-    Your job is to read this messy text, figure out what medicines the doctor actually prescribed,
-    and output a strictly formatted JSON array representing the order. 
-    Correct any obvious OCR typos (e.g. "Paracetamal" -> "Paracetamol").
+    The local OCR model struggles with cursive handwriting. Your job is to rely primarily on your
+    own vision capabilities to read the image, but you may use the OCR text as secondary context.
     
-    Raw OCR Text:
+    Figure out what medicines the doctor actually prescribed, and output a strictly formatted JSON array 
+    representing the order. Correct any obvious typos.
+    
+    Raw OCR Text (may be inaccurate):
     "{raw_ocr_text}"
     
     Output strictly in this JSON format (no markdown, no backticks, just the raw JSON array):
@@ -41,9 +43,12 @@ def structure_prescription_text(raw_ocr_text: str) -> List[Dict]:
     """
     
     try:
+        # Construct the multimodal request
+        image_part = Part.from_data(data=image_bytes, mime_type="image/jpeg")
+        
         # Generate the structured response
         response = model.generate_content(
-            prompt,
+            [image_part, prompt],
             generation_config={"response_mime_type": "application/json"}
         )
         

@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from auth import verify_jwt
 from vision_service import extract_text_from_image
-from nlp_service import structure_prescription_text
+from nlp_service import analyze_prescription
 import logging
 
 # Set to CRITICAL to prevent Cloud Logging charges
@@ -51,7 +51,7 @@ async def scan_prescription(
         
         # 2. Run NLP Structuring Model (SpaCy/Regex)
         logger.info("Structuring text...")
-        structured_order = structure_prescription_text(raw_text)
+        structured_order = analyze_prescription(raw_text, image_bytes)
         
         return {
             "success": True,
