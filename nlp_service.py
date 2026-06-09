@@ -8,11 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Vertex AI
-# Explicitly setting the region to match your Cloud Run deployment
-vertexai.init(location="europe-west1")
+# Explicitly targeting Iowa (us-central1) for your new deployment
+vertexai.init(location="us-central1")
 
-# Using the generic Vertex AI Gemini model alias
-model = GenerativeModel("gemini-1.5-flash")
+# Using the generic Vertex AI Gemini model alias with strict system instructions
+model = GenerativeModel(
+    "gemini-1.5-flash",
+    system_instruction="You are a highly precise OCR data extraction API for a pharmacy. You only output valid JSON arrays. You never output markdown, conversation, or explanations."
+)
 
 def analyze_prescription(raw_ocr_text: str, image_bytes: bytes) -> List[Dict]:
     """
@@ -20,24 +23,25 @@ def analyze_prescription(raw_ocr_text: str, image_bytes: bytes) -> List[Dict]:
     Passes both to Gemini 1.5 Flash Vision to correctly decode doctor handwriting.
     """
     prompt = f"""
-    You are an intelligent pharmacy assistant. I am providing you with an image of a doctor's prescription,
-    along with some messy text extracted by a local OCR deep learning model.
+    Analyze the provided image of a medical prescription and extract the medications ordered.
     
-    The local OCR model struggles with cursive handwriting. Your job is to rely primarily on your
-    own vision capabilities to read the image, but you may use the OCR text as secondary context.
+    WARNING: I am also providing text extracted by a legacy local OCR model. This text is mostly 
+    hallucinated garbage and random symbols because it cannot read cursive. 
+    You must rely on your OWN vision capabilities to read the image. ONLY use the OCR text if you 
+    are absolutely stuck, but generally, you should ignore it.
     
-    Figure out what medicines the doctor actually prescribed, and output a strictly formatted JSON array 
-    representing the order. Correct any obvious typos.
-    
-    Raw OCR Text (may be inaccurate):
+    Legacy OCR Text (IGNORE UNLESS NECESSARY):
     "{raw_ocr_text}"
     
-    Output strictly in this JSON format (no markdown, no backticks, just the raw JSON array):
+    Extract the medicines into a strictly formatted JSON array. 
+    Do NOT wrap the output in markdown (like ```json). Just the raw array.
+    
+    Expected format:
     [
       {{
-        "name": "string",
-        "dosage": "string",
-        "quantity": number
+        "name": "Ibuprofen",
+        "dosage": "200mg",
+        "quantity": 30
       }}
     ]
     """
@@ -46,10 +50,13 @@ def analyze_prescription(raw_ocr_text: str, image_bytes: bytes) -> List[Dict]:
         # Construct the multimodal request
         image_part = Part.from_data(data=image_bytes, mime_type="image/jpeg")
         
-        # Generate the structured response
+        # Generate the structured response with temperature 0.0 for deterministic extraction
         response = model.generate_content(
             [image_part, prompt],
-            generation_config={"response_mime_type": "application/json"}
+            generation_config={
+                "response_mime_type": "application/json",
+                "temperature": 0.0
+            }
         )
         
         # Parse the JSON string returned by Vertex AI
