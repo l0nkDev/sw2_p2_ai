@@ -5,7 +5,8 @@ from vision_service import extract_text_from_image
 from nlp_service import structure_prescription_text
 import logging
 
-logging.basicConfig(level=logging.INFO)
+# Set to CRITICAL to prevent Cloud Logging charges
+logging.basicConfig(level=logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="FarmaFICCT AI Scanner Service")

@@ -8,10 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Vertex AI
-# It will automatically look for GOOGLE_APPLICATION_CREDENTIALS in the environment
-project_id = os.getenv("GCP_PROJECT_ID", "your-gcp-project-id")
-location = os.getenv("GCP_LOCATION", "us-central1")
-vertexai.init(project=project_id, location=location)
+# On Cloud Run, it automatically detects the Project ID, Location, and Service Account!
+vertexai.init()
 
 # Using the Vertex AI Gemini model
 model = GenerativeModel("gemini-1.5-flash-001")
