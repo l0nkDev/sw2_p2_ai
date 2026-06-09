@@ -1,0 +1,8 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+vertex-credentials.json
+.vscode/
+.idea/
