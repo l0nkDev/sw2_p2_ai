@@ -12,7 +12,7 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # Using the generic Gemini model alias with strict system instructions
 model = genai.GenerativeModel(
-    "gemini-flash-latest",
+    "gemini-3.1-flash-lite",
     system_instruction="You are a highly precise OCR data extraction API for a pharmacy. You only output valid JSON arrays. You never output markdown, conversation, or explanations."
 )
 
