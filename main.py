@@ -1,7 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from auth import verify_jwt
-from vision_service import extract_text_from_image
 from nlp_service import analyze_prescription
 import logging
 
@@ -22,7 +21,7 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "sw2_p2_ai Deep Learning EasyOCR"}
+    return {"status": "ok", "service": "sw2_p2_ai Gemini Vision"}
 
 @app.post("/api/ai/scan-prescription")
 async def scan_prescription(
@@ -30,9 +29,8 @@ async def scan_prescription(
     user_id: int = Depends(verify_jwt)
 ):
     """
-    Scans an uploaded prescription image.
+    Scans an uploaded prescription image natively using Gemini 1.5 Flash Vision.
     Requires a valid JWT Bearer token.
-    Uses Keras-OCR (TensorFlow) to extract text, then structures it using NLP.
     """
     if not file.content_type.startswith("image/"):
         raise HTTPException(
@@ -44,19 +42,14 @@ async def scan_prescription(
         image_bytes = await file.read()
         logger.info(f"User {user_id} requested prescription scan. Size: {len(image_bytes)} bytes.")
         
-        # 1. Run Local Deep Learning Vision Model (EasyOCR / PyTorch)
-        logger.info("Running EasyOCR...")
-        raw_text = extract_text_from_image(image_bytes)
-        logger.info(f"Extracted Raw Text: {raw_text}")
-        
-        # 2. Run NLP Structuring Model (SpaCy/Regex)
-        logger.info("Structuring text...")
-        structured_order = analyze_prescription(raw_text, image_bytes)
+        # 1. Run Pure Gemini Vision Model
+        logger.info("Analyzing image via Gemini Vision...")
+        structured_order = analyze_prescription(image_bytes)
         
         return {
             "success": True,
             "user_id": user_id,
-            "raw_ocr_text": raw_text,
+            "raw_ocr_text": "N/A (Using Pure Gemini Vision)",
             "order": structured_order
         }
         

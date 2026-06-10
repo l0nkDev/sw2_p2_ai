@@ -7,13 +7,7 @@ ENV PYTHONUNBUFFERED True
 # Set the working directory
 WORKDIR /app
 
-# Install system dependencies required by OpenCV and EasyOCR
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    && rm -rf /var/lib/apt/lists/*
+
 
 # Copy the requirements list
 COPY requirements.txt .
