@@ -11,6 +11,7 @@ security = HTTPBearer()
 JWT_SECRET = os.getenv("JWT_SECRET", "dev_access_secret_change_me")
 ALGORITHM = "HS256"
 
+
 def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
     try:
